@@ -18,8 +18,8 @@ class Linear2DSystem:
         if type(b) is str:
             b = np.asmatrix(b)
 
-        self.A = np.matrix(A)
-        self.b = np.matrix(b)
+        self.A = np.array(A)
+        self.b = np.array(b)
         # check argument dimensions
         if self.A.shape != (2, 2):
             raise ValueError
@@ -35,6 +35,18 @@ class Linear2DSystem:
         self._y = y
     
     def __repr__(self):
+        return self.__str__()
+    
+    def __symrepr__(self):
+        return self.__call__(self._X)
+
+    def show(self):
+        sp.pprint(self.__symrepr__())
+    
+    def __str__(self):
+        return self.__call__(self._X).__str__()
+
+    def __symrepr__(self):
         return self.sym_A*self._X + self.b
 
     def __call__(self, X):
@@ -42,7 +54,7 @@ class Linear2DSystem:
             X = np.array(X)
         X = X.reshape(2,1)
         if X is NumArray:
-            return self.A*X + self.b
+            return self.A.dot(X) + self.b
         return self.sym_A*X + self.b
 
     def eval(self, X: NumArray):
@@ -50,14 +62,17 @@ class Linear2DSystem:
         """
         return np.array(self.__call__(X)).flatten()
     
-    def plot(self, x_rage = (-10, 10), y_rage = (-10, 10), n_grid = 30):
+    def plot(self, x_rage = (-10, 10), y_rage = (-10, 10), n_grid = 50):
+        fig, ax = plt.subplots(figsize=(5, 5))
         # draw singular points
         x_min, x_max = x_rage
         y_min, y_max = y_rage
-        plt.grid(True)
+        ax.grid(True)
+        ax.set_xlim(*x_rage)
+        ax.set_ylim(*y_rage)
 
         try:
-            x0, y0 = np.array(self.A.I*(-self.b)) # calcula a singularidade
+            x0, y0 = np.array(nplg.inv(self.A).dot(-self.b)) # calcula a singularidade
             singular_pts = True
             print(f'Singularidade: ({x0[0]},{y0[0]})')
         except nplg.LinAlgError: 
@@ -79,8 +94,16 @@ class Linear2DSystem:
                 dx_dt = self.eval(X_vec)
                 U[i, j] = dx_dt[0]
                 V[i, j] = dx_dt[1]
-        
-        plt.streamplot(X, Y, U, V, color='b', linewidth=0.7, density=1.5, arrowstyle='->', arrowsize=1.5)
+        props = dict(
+            color='b',
+            linewidth=0.7,
+            density=0.5,
+            arrowstyle='->',
+            arrowsize=1.5,
+            minlength=0.1,
+            broken_streamlines=False
+        )
+        ax.streamplot(X, Y, U, V, **props)
 
         # Draw autovects lines
         print('Autovalores:')
@@ -90,9 +113,6 @@ class Linear2DSystem:
             # entao se o autovalor é zero o vetor indica as singularidade
             # se nao for, então pula para o proximo vetor
             if (not singular_pts) and lbd: continue
-
-            t = sp.symbols('t')
-
             for a, b in vecs:
                 print(f'\t\tVetor: ({a}, {b})')
                 if np.abs(a) > np.abs(b):
@@ -106,19 +126,19 @@ class Linear2DSystem:
                 # Isso nao garante que saia do frame range
                 # Mas se sair é pq o ponto singular é mal posicionado
                 # dai ele ajuda melhorando o frame_range    
-                plt.plot([x0 + a*t2, x0 + a*t1], [y0 + b*t2, y0 + b*t1], 'k--')
-                if singular_pts:
-                    plt.plot(x0, y0, 'ro')
-        plt.show(block=False)
+                ax.plot([x0 + a*t1, x0 + a*t2], [y0 + b*t1, y0 + b*t2], 'k--')
+        if singular_pts:
+            ax.plot(x0, y0, 'ro')
+        fig.show()
 
     def __add__(self, other):
-        return self.__repr__() + other
+        return self.__symrepr__() + other
     def __sub__(self, other):
-        return self.__repr__() - other
+        return self.__symrepr__() - other
     def __mul__(self, other):
-        return self.__repr__() * other
+        return self.__symrepr__() * other
     def __truediv__(self, other):
-        return self.__repr__() / other
+        return self.__symrepr__() / other
     def __floordiv__(self, other):
-        return self.__repr__() // other
+        return self.__symrepr__() // other
 
