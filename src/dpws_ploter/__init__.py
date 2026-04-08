@@ -18,36 +18,32 @@ class Linear2DSystem:
         if type(b) is str:
             b = np.asmatrix(b)
 
-        self.A = np.array(A)
-        self.b = np.array(b)
         # check argument dimensions
+        self.A = np.array(A)
         if self.A.shape != (2, 2):
             raise ValueError
-        if self.b.shape != (2, 1):
-            raise ValueError
-        
+        self.b = np.array(b).reshape(2, 1)
+
         self.sym_A = sp.Matrix(A)
         self.sym_b = sp.Matrix(b)
 
         x, y = sp.symbols(symbols)
-        self._X = sp.Matrix([[x],[y]])
-        self._x = x
-        self._y = y
+        self.sym_X = sp.Matrix([[x],[y]])
     
     def __repr__(self):
         return self.__str__()
     
     def __symrepr__(self):
-        return self.__call__(self._X)
+        return self.__call__(self.sym_X)
 
     def show(self):
         sp.pprint(self.__symrepr__())
     
     def __str__(self):
-        return self.__call__(self._X).__str__()
+        return self.__call__(self.sym_X).__str__()
 
     def __symrepr__(self):
-        return self.sym_A*self._X + self.b
+        return self.sym_A*self.sym_X + self.b
 
     def __call__(self, X):
         if type(X) is list or type(X) is tuple:
