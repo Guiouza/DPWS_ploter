@@ -58,14 +58,14 @@ class Linear2DSystem:
         """
         return np.array(self.__call__(X)).flatten()
     
-    def plot(self, x_rage = (-10, 10), y_rage = (-10, 10), n_grid = 50):
+    def plot(self, x_range = (-10, 10), y_range = (-10, 10), n_grid = 25, density=1):
         fig, ax = plt.subplots(figsize=(5, 5))
         # draw singular points
-        x_min, x_max = x_rage
-        y_min, y_max = y_rage
+        x_min, x_max = x_range
+        y_min, y_max = y_range
         ax.grid(True)
-        ax.set_xlim(*x_rage)
-        ax.set_ylim(*y_rage)
+        ax.set_xlim(*x_range)
+        ax.set_ylim(*y_range)
 
         try:
             x0, y0 = np.array(nplg.inv(self.A).dot(-self.b)) # calcula a singularidade
@@ -91,12 +91,12 @@ class Linear2DSystem:
                 U[i, j] = dx_dt[0]
                 V[i, j] = dx_dt[1]
         props = dict(
-            color='b',
+            color='gray',
             linewidth=0.7,
-            density=0.5,
+            density=density,
             arrowstyle='->',
             arrowsize=1.5,
-            minlength=0.1,
+            minlength=1,
             broken_streamlines=False
         )
         ax.streamplot(X, Y, U, V, **props)
@@ -105,9 +105,10 @@ class Linear2DSystem:
         print('Autovalores:')
         for lbd, mul, vecs in self.sym_A.eigenvects():
             print(f'\tlbd: {lbd}, mul: {mul}:')
-            # Se não tem ponto singular unico
+            # Se não tem ponto singularunico
             # entao se o autovalor é zero o vetor indica as singularidade
             # se nao for, então pula para o proximo vetor
+            if sp.im(lbd) != 0: continue
             if (not singular_pts) and lbd: continue
             for a, b in vecs:
                 print(f'\t\tVetor: ({a}, {b})')
@@ -120,11 +121,12 @@ class Linear2DSystem:
                     t1 = (y_min - y0)/b
                     t2 = (y_max - y0)/b
                 # Isso nao garante que saia do frame range
-                # Mas se sair é pq o ponto singular é mal posicionado
-                # dai ele ajuda melhorando o frame_range    
-                ax.plot([x0 + a*t1, x0 + a*t2], [y0 + b*t1, y0 + b*t2], 'k--')
+                # Mas se sair é pq o ponto singular é mal posicionado nos limites
+                # dai a linha 67 corta o que estiver fora do range
+                formating = 'r--' if lbd < 0 else 'b--'
+                ax.plot([x0 + a*t1, x0 + a*t2], [y0 + b*t1, y0 + b*t2], formating)
         if singular_pts:
-            ax.plot(x0, y0, 'ro')
+            ax.plot(x0, y0, 'ko')
         fig.show()
 
     def __add__(self, other):
