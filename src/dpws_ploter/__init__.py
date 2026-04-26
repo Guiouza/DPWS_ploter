@@ -37,7 +37,7 @@ class Linear2DSystem:
         return self.__call__(self.sym_X)
 
     def show(self):
-        sp.pprint(self.__symrepr__())
+        sp.pprint(self.__symrepr__(), )
     
     def __str__(self):
         return self.__call__(self.sym_X).__str__()
@@ -139,4 +139,3 @@ class Linear2DSystem:
         return self.__symrepr__() / other
     def __floordiv__(self, other):
         return self.__symrepr__() // other
-

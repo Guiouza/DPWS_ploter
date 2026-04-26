@@ -1,7 +1,7 @@
 [project]
 name = "dpws-ploter"
 version = "0.1.0"
-description = "Add your description here"
+description = "Its a lybrary with tools plotting linear piecewise dinamical systems in R²"
 readme = "README.md"
 requires-python = ">=3.14"
 dependencies = [
