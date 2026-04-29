@@ -1,5 +1,5 @@
 [project]
-name = "dpws-ploter"
+name = "dpws-plotter"
 version = "0.1.0"
 description = "Its a lybrary with tools plotting linear piecewise dinamical systems in R²"
 readme = "README.md"

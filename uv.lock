@@ -54,7 +54,7 @@ wheels = [
 ]
 
 [[package]]
-name = "dpws-ploter"
+name = "dpws-plotter"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
