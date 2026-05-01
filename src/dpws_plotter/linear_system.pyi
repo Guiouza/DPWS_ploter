@@ -18,6 +18,8 @@ class Linear2DSystem:
         self.sym_A: MutableDenseMatrix = None
         self.sym_b: MutableDenseMatrix = None
         self.sym_X: MutableDenseMatrix = None
+        self.eigenvectors = None
+        self.singularity = None
 
     def print(self) -> None: ...
     def symrepr(self) -> MutableDenseMatrix: ...

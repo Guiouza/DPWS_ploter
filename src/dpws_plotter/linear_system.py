@@ -30,7 +30,7 @@ class Linear2DSystem:
     ⎢ ⎥
     ⎣y⎦
     >>> F.plot()
-
+    Singularity: (0.0,0.0)
     """
     def __init__(self, A, b, symbols='x y'):
         # type checking for A
@@ -53,6 +53,15 @@ class Linear2DSystem:
         self.sym_b = sp.Matrix(self.b)
         x, y = sp.symbols(symbols)
         self.sym_X = sp.Matrix([[x], [y]])
+
+        self.singularity = None
+        try:
+            x0, y0 = np.array(nlg.inv(self.A).dot(-self.b))  # calcula a singularidade
+            self.singularity = (x0, y0)
+        except nlg.LinAlgError:
+            pass
+
+        self.eigenvectors = self.sym_A.eigenvects()
 
     def print(self):
         sp.pprint(self.symrepr(), )
@@ -78,20 +87,21 @@ class Linear2DSystem:
             raise ValueError
 
         fig, ax = plt.subplots(figsize=(5, 5))
-        # draw singular points
         x_min, x_max = x_range
         y_min, y_max = y_range
         ax.grid(True)
         ax.set_xlim(x_min, x_max)
         ax.set_ylim(y_min, y_max)
 
-        try:
-            x0, y0 = np.array(nlg.inv(self.A).dot(-self.b))  # calcula a singularidade
+        # draw singular points
+        if self.singularity is None:
+            # por padrão -b é singular para os casos degenerados
+            x0, y0 = np.array(-self.b).flatten()
+            singular_pts = False
+        else:
+            x0, y0 = self.singularity
             singular_pts = True
             print(f'Singularity: ({x0[0]},{y0[0]})')
-        except nlg.LinAlgError:
-            x0, y0 = np.array(-self.b).flatten()  # por padrão (0,0) é singular para os casos degenerados
-            singular_pts = False
 
         # Draw streamplot
         # Create a grid for the vector field
@@ -120,33 +130,32 @@ class Linear2DSystem:
         )
         plt.streamplot(x_grid, y_grid, u, v, **props)
 
-        # Draw eigenvectors lines
-        print('Eigenvalues:')
-        for lbd, mul, vecs in self.sym_A.eigenvects():
-            print(f'\tlbd: {lbd}, mul: {mul}:')
-            # if the linear system doesn't have a unic singularity then the eigenvalue is zero
-            # então se o autovalor é zero o vetor indica as singularidade
-            # se nao for, então pula para o proximo vetor
+        # Draw auto-spaces
+        for lbd, mul, vecs in self.eigenvectors:
+            # If there is no singularity, skip drawing auto-space process
+            if self.singularity is None: break
+            # If lbd is complex, skip drawing auto-space
             if sp.im(lbd) != 0: continue
-            if (not singular_pts) and lbd: continue
 
             for a, b in vecs:
-                print(f'\t\tEigenvector: ({a}, {b})')
+                # Find min and max values for the auto-space parameter t
+                # auto-space line: (x0,y0) + t*(a,b)
                 if np.abs(a) > np.abs(b):
-                    # x moves out of the grid first
+                    # dx/dt > dy/dt: x is faster then y
                     t1 = (x_min - x0) / a
                     t2 = (x_max - x0) / a
                 else:
-                    # y moves out of the grid first
+                    # y is faster then x
                     t1 = (y_min - y0) / b
                     t2 = (y_max - y0) / b
-                # Isso não garante que saia do frame range
-                # Mas se sair é porque o ponto singular é mal posicionado nos limites
-                # dai a linha 67 corta o que estiver fora do range
+
+                # Draw auto-space line
                 formating = 'r--' if lbd < 0 else 'b--'
                 ax.plot([x0 + a * t1, x0 + a * t2], [y0 + b * t1, y0 + b * t2], formating)
-        if singular_pts:
+        # Draw singularity
+        if self.singularity:
             ax.plot(x0, y0, 'ko')
+        # Draw figure
         fig.show()
 
     def __repr__(self):
